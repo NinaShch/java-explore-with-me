@@ -1,18 +1,18 @@
 package ru.practicum.hit;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
-@RequiredArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "hits")
 public class EndpointHit {
+    //название класса из спецификации
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;

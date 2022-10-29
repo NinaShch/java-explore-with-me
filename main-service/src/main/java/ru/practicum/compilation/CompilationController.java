@@ -17,7 +17,7 @@ public class CompilationController {
 
     private final CompilationService compilationService;
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<CompilationDto> getCompilations(
             @RequestParam(defaultValue = "false", required = false) boolean pinned,
             @RequestParam(defaultValue = "0", required = false) int from,
@@ -27,10 +27,10 @@ public class CompilationController {
         return compilationService.getCompilations(pinned, from, size);
     }
 
-    @GetMapping("/{compId}")
+    @GetMapping(value = "/{compId}", produces = "application/json")
     public CompilationDto getCompilationById(@PathVariable Long compId) {
         log.info("request compilation id = {}", compId);
-        return compilationService.getCompilationById(compId);
+        return compilationService.getCompilationDtoById(compId);
     }
 }
 

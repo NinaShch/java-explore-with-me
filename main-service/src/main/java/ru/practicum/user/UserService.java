@@ -4,33 +4,32 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.HelperService;
 import ru.practicum.category.CategoryRepository;
-import ru.practicum.category.model.Category;
+import ru.practicum.client.StatHitClient;
 import ru.practicum.event.EventMapper;
 import ru.practicum.event.EventRepository;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventDto;
-import ru.practicum.event.model.Event;
-import ru.practicum.event.model.State;
-import ru.practicum.event.model.Status;
-import ru.practicum.exception.BadRequestException;
+import ru.practicum.event.entity.Event;
+import ru.practicum.event.entity.State;
+import ru.practicum.event.entity.Status;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.paging.OffsetLimitPageable;
-import ru.practicum.request.ParticipationRequest;
-import ru.practicum.request.ParticipationRequestDto;
+import ru.practicum.request.entity.ParticipationRequest;
+import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.ParticipationRequestMapper;
 import ru.practicum.request.ParticipationRequestRepository;
 import ru.practicum.user.dto.NewUserDto;
 import ru.practicum.user.dto.UserDto;
-import ru.practicum.user.model.User;
+import ru.practicum.user.entity.User;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,18 +43,23 @@ public class UserService {
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository participationRequestRepository;
+    private final ParticipationRequestMapper participationRequestMapper;
+    private final UserMapper userMapper;
+    private final EventMapper eventMapper;
+    private final StatHitClient statHitClient;
+    private final HelperService helperService;
 
     public List<EventShortDto> getEventsByUser(Long userId, int from, int size) {
-        User user = getUserById(userId);
+        User user = helperService.getUserById(userId);
         Pageable pageable = OffsetLimitPageable.create(from, size, Sort.by(Sort.Direction.ASC, "eventDate"));
         return eventRepository.findByInitiator(user, pageable).stream()
-                .map(EventMapper::toEventShortDto)
+                .map(eventMapper::toEventShortDto)
                 .collect(Collectors.toList());
     }
 
     public EventFullDto updateEventByUser(Long userId, UpdateEventDto updateEventDto) {
-        User user = getUserById(userId);
-        Event event = getEventById(updateEventDto.getEventId());
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(updateEventDto.getEventId());
 
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can update event", CONDITIONS_NOT_MET);
@@ -63,48 +67,48 @@ public class UserService {
         if (event.getState().equals(State.PUBLISHED))
             throw new ForbiddenException("Only pending or canceled events can be changed", CONDITIONS_NOT_MET);
 
-        LocalDateTime eventDate = parseDate(updateEventDto.getEventDate());
+        LocalDateTime eventDate = helperService.parseDate(updateEventDto.getEventDate());
         validateEventDate(eventDate);
 
         event.setAnnotation(updateEventDto.getAnnotation());
-        event.setCategory(categoryRepository.findById(updateEventDto.getCategory())
-                .orElseThrow(() -> new NotFoundException("Category not found")));
+        event.setCategory(helperService.getCategoryById(updateEventDto.getCategory()));
         event.setDescription(updateEventDto.getDescription());
         event.setEventDate(eventDate);
         event.setPaid(updateEventDto.isPaid());
         event.setParticipantLimit(updateEventDto.getParticipantLimit());
         event.setTitle(updateEventDto.getTitle());
         if (event.getState().equals(State.CANCELED)) event.setState(State.PENDING);
-        return EventMapper.toEventFullDto(eventRepository.save(event));
+        Event savedEvent = eventRepository.save(event);
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()));
 
     }
 
     public EventFullDto createEventByUser(Long userId, NewEventDto newEventDto) {
-        User user = getUserById(userId);
-        Category category = categoryRepository.findById(newEventDto.getCategory()).orElseThrow(
+        User user = helperService.getUserById(userId);
+        categoryRepository.findById(newEventDto.getCategory()).orElseThrow(
                 () -> new NotFoundException("Category not found"));
 
-        LocalDateTime eventDate = parseDate(newEventDto.getEventDate());
+        LocalDateTime eventDate = helperService.parseDate(newEventDto.getEventDate());
         validateEventDate(eventDate);
 
-        Event event = EventMapper.toEvent(newEventDto, category, eventDate, user);
+        Event event = eventMapper.toEvent(newEventDto, user, LocalDateTime.now());
         Event savedEvent = eventRepository.save(event);
-        return EventMapper.toEventFullDto(savedEvent);
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()));
     }
 
     public EventFullDto getEventByUserAndId(Long userId, Long eventId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can get event details", CONDITIONS_NOT_MET);
         }
 
-        return EventMapper.toEventFullDto(event);
+        return eventMapper.toEventFullDto(event, statHitClient.statsRequest(event.getId()));
     }
 
     public EventFullDto cancelEvent(Long userId, Long eventId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can cancel events", CONDITIONS_NOT_MET);
         }
@@ -115,30 +119,31 @@ public class UserService {
         event.setState(State.CANCELED);
         Event cancelledEvent = eventRepository.save(event);
 
-        return EventMapper.toEventFullDto(cancelledEvent);
+        return eventMapper.toEventFullDto(cancelledEvent, statHitClient.statsRequest(cancelledEvent.getId()));
     }
 
     public List<ParticipationRequestDto> getEventRequestsByUserAndId(Long userId, Long eventId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can get event requests", CONDITIONS_NOT_MET);
         }
 
         return participationRequestRepository.findByEvent(event)
                 .stream()
-                .map(ParticipationRequestMapper::toParticipationRequestDto)
+                .map(participationRequestMapper::toParticipationRequestDto)
                 .collect(Collectors.toList());
     }
 
     public ParticipationRequestDto confirmRequest(Long userId, Long eventId, Long reqId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can confirm requests", CONDITIONS_NOT_MET);
         }
 
         // нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие
+        // из сваггера - Ограничение на количество участников. Значение 0 - означает отсутствие ограничения
         if (event.getParticipantLimit() > 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
             throw new ForbiddenException("Participant limit reached", CONDITIONS_NOT_MET);
         }
@@ -153,15 +158,15 @@ public class UserService {
 
         // если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить
         if (event.getParticipantLimit() > 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            participationRequestRepository.cancelAllPendingRequests();
+            participationRequestRepository.cancelAllPendingRequestsForEvent(event);
         }
 
-        return ParticipationRequestMapper.toParticipationRequestDto(savedOne);
+        return participationRequestMapper.toParticipationRequestDto(savedOne);
     }
 
     public ParticipationRequestDto rejectRequest(Long userId, Long eventId, Long reqId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
             throw new ForbiddenException("Only the initiator can reject requests", CONDITIONS_NOT_MET);
         }
@@ -170,23 +175,7 @@ public class UserService {
         participationRequest.setStatus(Status.REJECTED);
 
         ParticipationRequest cancelledOne = participationRequestRepository.save(participationRequest);
-        return ParticipationRequestMapper.toParticipationRequestDto(cancelledOne);
-    }
-
-    private LocalDateTime parseDate(String dateString) {
-        try {
-            return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        } catch (DateTimeParseException ex) {
-            throw new BadRequestException("Wrong datetime $dateString");
-        }
-    }
-
-    private User getUserById(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
-    }
-
-    private Event getEventById(Long eventId) {
-        return eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Event not found"));
+        return participationRequestMapper.toParticipationRequestDto(cancelledOne);
     }
 
     private ParticipationRequest getParticipationRequestById(Long reqId) {
@@ -202,13 +191,13 @@ public class UserService {
     }
 
     public UserDto addNewUser(NewUserDto newUserDto) {
-        User newUser = UserMapper.toNewUser(newUserDto);
+        User newUser = userMapper.toNewUser(newUserDto);
         User savedUser = userRepository.save(newUser);
-        return UserMapper.toUserDto(savedUser);
+        return userMapper.toUserDto(savedUser);
     }
 
     public void deleteUser(Long userId) {
-        User user = getUserById(userId);
+        User user = helperService.getUserById(userId);
         userRepository.delete(user);
     }
 
@@ -216,28 +205,26 @@ public class UserService {
         if (ids == null) {
             Pageable pageable = OffsetLimitPageable.create(from, size, Sort.by(Sort.Direction.ASC, "id"));
             return userRepository.findAll(pageable).stream()
-                    .map(UserMapper::toUserDto)
+                    .map(userMapper::toUserDto)
                     .collect(Collectors.toList());
         } else {
-            List<UserDto> users = new ArrayList<>();
-            for (Long id : ids) {
-                userRepository.findById(id).ifPresent(user -> users.add(UserMapper.toUserDto(user)));
-            }
-            return users;
+            return userRepository.findByIds(Arrays.stream(ids).collect(Collectors.toList())).stream()
+                    .map(userMapper::toUserDto).collect(Collectors.toList());
         }
     }
 
-    public List<ParticipationRequestDto> getEventRequestsByUser(Long userId) {
-        User requester = getUserById(userId);
+    public List<ParticipationRequestDto> getListParticipationRequestByUserId(Long userId) {
+        User requester = helperService.getUserById(userId);
         return participationRequestRepository.findByRequester(requester)
                 .stream()
-                .map(ParticipationRequestMapper::toParticipationRequestDto)
+                .map(participationRequestMapper::toParticipationRequestDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ParticipationRequestDto createEventRequestByUser(Long userId, Long eventId) {
-        User user = getUserById(userId);
-        Event event = getEventById(eventId);
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
         if (event.getInitiator().equals(user)) {
             throw new ForbiddenException("Can't request own events", CONDITIONS_NOT_MET);
         }
@@ -258,17 +245,16 @@ public class UserService {
                 .status(event.isRequestModeration() ? Status.PENDING : Status.CONFIRMED)
                 .build();
 
-        ParticipationRequest savedParticipationRequest = participationRequestRepository.save(participationRequest);
-
         if (participationRequest.getStatus() == Status.CONFIRMED) {
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
-        return ParticipationRequestMapper.toParticipationRequestDto(savedParticipationRequest);
+        return participationRequestMapper
+                .toParticipationRequestDto(participationRequestRepository.save(participationRequest));
     }
 
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        User user = getUserById(userId);
+        User user = helperService.getUserById(userId);
         ParticipationRequest request = getParticipationRequestById(requestId);
 
         if (!request.getRequester().equals(user)) {
@@ -278,6 +264,6 @@ public class UserService {
         request.setStatus(Status.CANCELED);
 
         ParticipationRequest cancelledOne = participationRequestRepository.save(request);
-        return ParticipationRequestMapper.toParticipationRequestDto(cancelledOne);
+        return participationRequestMapper.toParticipationRequestDto(cancelledOne);
     }
 }

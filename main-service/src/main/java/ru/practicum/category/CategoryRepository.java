@@ -3,7 +3,7 @@ package ru.practicum.category;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import ru.practicum.category.model.Category;
+import ru.practicum.category.entity.Category;
 
 import java.util.List;
 

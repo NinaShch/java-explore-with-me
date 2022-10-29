@@ -7,7 +7,7 @@ import ru.practicum.exception.BadRequestException;
 
 public class OffsetLimitPageable extends PageRequest {
 
-    private static final int MAX_PAGE_SIZE = Integer.MAX_VALUE;
+    private static final int MAX_PAGE_SIZE = 256;
 
     private final int offset;
     private final int size;
@@ -57,30 +57,19 @@ public class OffsetLimitPageable extends PageRequest {
         return false;
     }
 
-    public static Pageable create(Integer offset, Integer size) {
-        return create(offset, size, Sort.unsorted());
-    }
-
     public static Pageable create(Integer offset, Integer size, Sort sort) {
         if (offset == null && size == null) {
-            return unpaged(sort);
+            return new OffsetLimitPageable(0, MAX_PAGE_SIZE, sort);
         }
         validatePaging(offset, size);
         return new OffsetLimitPageable(offset, size, sort);
     }
 
-    public static Pageable unpaged(Sort sort) {
-        return new OffsetLimitPageable(0, MAX_PAGE_SIZE, sort);
-    }
-
-    public static Pageable unpaged() {
-        return unpaged(Sort.unsorted());
-    }
-
     private static void validatePaging(Integer from, Integer size) {
         if (from == null && size == null) return;
-        if (from == null || size == null) throw new BadRequestException("must provide both from and size or no one");
-        if (size <= 0) throw new BadRequestException("size must be positive");
-        if (from < 0) throw new BadRequestException("from must be positive or 0");
+        if (from == null || size == null)
+            throw new BadRequestException("Must provide both from and size or no one", "Size or from is absent");
+        if (size <= 0) throw new BadRequestException("Size must be positive", "Size " + size + " <=0");
+        if (from < 0) throw new BadRequestException("From must be positive or 0", "From " + from + " <0");
     }
 }

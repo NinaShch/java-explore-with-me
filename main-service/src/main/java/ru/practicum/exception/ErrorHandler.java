@@ -13,7 +13,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(final NotFoundException e) {
-        log.warn(e.getMessage());
+        log.error("Exception", e);
         return new ErrorResponse(
                 e.getStatus(),
                 e.getReason(),
@@ -25,9 +25,33 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponseWithErrorsList handleForbiddenException(final ForbiddenException e) {
-        log.warn(e.getMessage());
+        log.error("Exception", e);
         return new ErrorResponseWithErrorsList(
                 e.getErrors(),
+                e.getStatus(),
+                e.getReason(),
+                e.getMessage(),
+                e.getTimestamp()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequestException(final BadRequestException e) {
+        log.error("Exception", e);
+        return new ErrorResponse(
+                e.getStatus(),
+                e.getReason(),
+                e.getMessage(),
+                e.getTimestamp()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleInternalServerErrorException(final InternalServerErrorException e) {
+        log.error("Exception", e);
+        return new ErrorResponse(
                 e.getStatus(),
                 e.getReason(),
                 e.getMessage(),

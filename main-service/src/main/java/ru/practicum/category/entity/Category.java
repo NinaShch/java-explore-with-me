@@ -1,14 +1,12 @@
-package ru.practicum.category.model;
+package ru.practicum.category.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
-@Data
+@Getter
+@Setter
 @RequiredArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "categories")
 public class Category {

@@ -8,7 +8,7 @@ import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventDto;
-import ru.practicum.request.ParticipationRequestDto;
+import ru.practicum.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{userId}/events")
+    @GetMapping(value = "/{userId}/events", produces = "application/json")
     public List<EventShortDto> getEventsByUser(
             @PathVariable Long userId,
             @RequestParam(required = false, defaultValue = "0") int from,
@@ -31,7 +31,7 @@ public class UserController {
         return userService.getEventsByUser(userId, from, size);
     }
 
-    @PatchMapping("/{userId}/events")
+    @PatchMapping(value = "/{userId}/events", produces = "application/json", consumes = "application/json")
     public EventFullDto updateEventByUser(
             @PathVariable Long userId,
             @RequestBody UpdateEventDto updateEventDto) {
@@ -39,7 +39,7 @@ public class UserController {
         return userService.updateEventByUser(userId, updateEventDto);
     }
 
-    @PostMapping("/{userId}/events")
+    @PostMapping(value = "/{userId}/events", produces = "application/json", consumes = "application/json")
     public EventFullDto createEventByUser(
             @PathVariable Long userId,
             @RequestBody NewEventDto newEventDto) {
@@ -47,7 +47,7 @@ public class UserController {
         return userService.createEventByUser(userId, newEventDto);
     }
 
-    @GetMapping("/{userId}/events/{eventId}")
+    @GetMapping(value = "/{userId}/events/{eventId}", produces = "application/json")
     public EventFullDto getEventByUserAndId(
             @PathVariable Long userId,
             @PathVariable Long eventId
@@ -56,7 +56,7 @@ public class UserController {
         return userService.getEventByUserAndId(userId, eventId);
     }
 
-    @PatchMapping("/{userId}/events/{eventId}")
+    @PatchMapping(value = "/{userId}/events/{eventId}", produces = "application/json")
     public EventFullDto cancelEvent(
             @PathVariable Long userId,
             @PathVariable Long eventId
@@ -65,7 +65,7 @@ public class UserController {
         return userService.cancelEvent(userId, eventId);
     }
 
-    @GetMapping("/{userId}/events/{eventId}/requests")
+    @GetMapping(value = "/{userId}/events/{eventId}/requests", produces = "application/json")
     public List<ParticipationRequestDto> getEventRequestsByUserAndId(
             @PathVariable Long userId,
             @PathVariable Long eventId
@@ -74,7 +74,9 @@ public class UserController {
         return userService.getEventRequestsByUserAndId(userId, eventId);
     }
 
-    @PatchMapping("/{userId}/events/{eventId}/requests/{reqId}/confirm")
+    @PatchMapping(value = "/{userId}/events/{eventId}/requests/{reqId}/confirm", produces = "application/json")
+    //формат ответа прописан в ТЗ, изменение формата может привести к тому что при отправке задания не
+    //будут пройдены тесты и нельзя будет влить PR
     public ParticipationRequestDto confirmRequest(
             @PathVariable Long userId,
             @PathVariable Long eventId,
@@ -84,7 +86,7 @@ public class UserController {
         return userService.confirmRequest(userId, eventId, reqId);
     }
 
-    @PatchMapping("/{userId}/events/{eventId}/requests/{reqId}/reject")
+    @PatchMapping(value = "/{userId}/events/{eventId}/requests/{reqId}/reject", produces = "application/json")
     public ParticipationRequestDto rejectRequest(
             @PathVariable Long userId,
             @PathVariable Long eventId,
@@ -94,13 +96,13 @@ public class UserController {
         return userService.rejectRequest(userId, eventId, reqId);
     }
 
-    @GetMapping("/{userId}/requests")
+    @GetMapping(value = "/{userId}/requests", produces = "application/json")
     public List<ParticipationRequestDto> getEventRequestsByUser(@PathVariable Long userId) {
         log.info("request event requests by user id = {}", userId);
-        return userService.getEventRequestsByUser(userId);
+        return userService.getListParticipationRequestByUserId(userId);
     }
 
-    @PostMapping("/{userId}/requests")
+    @PostMapping(value = "/{userId}/requests", produces = "application/json")
     public ParticipationRequestDto createEventRequestByUser(
             @PathVariable Long userId,
             @RequestParam Long eventId
@@ -109,7 +111,7 @@ public class UserController {
         return userService.createEventRequestByUser(userId, eventId);
     }
 
-    @PatchMapping("/{userId}/requests/{requestId}/cancel")
+    @PatchMapping(value = "/{userId}/requests/{requestId}/cancel", produces = "application/json")
     public ParticipationRequestDto cancelRequest(
             @PathVariable Long userId,
             @PathVariable Long requestId

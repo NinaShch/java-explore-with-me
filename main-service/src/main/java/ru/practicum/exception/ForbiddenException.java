@@ -2,9 +2,8 @@ package ru.practicum.exception;
 
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -17,8 +16,9 @@ public class ForbiddenException extends RuntimeException {
     public ForbiddenException(String message, String reason) {
         super(message);
         errors = new ArrayList<>();
+        errors.add(Arrays.toString(this.getStackTrace()));
         status = "FORBIDDEN";
-        timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
+        timestamp = DateTimeConverter.getDateTimeNow();
         this.reason = reason;
     }
 }

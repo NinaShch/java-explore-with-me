@@ -1,19 +1,19 @@
-package ru.practicum.request;
+package ru.practicum.request.entity;
 
 import lombok.*;
-import ru.practicum.event.model.Event;
-import ru.practicum.event.model.Status;
-import ru.practicum.user.model.User;
+import ru.practicum.event.entity.Event;
+import ru.practicum.event.entity.Status;
+import ru.practicum.user.entity.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 @Table(name = "participation_requests")
 public class ParticipationRequest {
     @Id

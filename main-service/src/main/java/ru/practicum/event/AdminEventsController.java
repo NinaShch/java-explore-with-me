@@ -1,10 +1,9 @@
-package ru.practicum.admin;
+package ru.practicum.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.event.EventService;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.NewEventDto;
 
@@ -19,7 +18,7 @@ public class AdminEventsController {
 
     private final EventService eventService;
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<EventFullDto> getEventsByParams(
             @RequestParam(required = false) long[] userIds,
             @RequestParam(required = false) String[] states,
@@ -33,7 +32,7 @@ public class AdminEventsController {
         return eventService.getEventByParamsForAdmin(userIds, states, categories, rangeStart, rangeEnd, from, size);
     }
 
-    @PutMapping("/{eventId}")
+    @PutMapping(value = "/{eventId}", produces = "application/json", consumes = "application/json")
     public EventFullDto putEvent(
             @PathVariable long eventId,
             @RequestBody NewEventDto newEventDto
@@ -42,13 +41,13 @@ public class AdminEventsController {
         return eventService.putEvent(eventId, newEventDto);
     }
 
-    @PatchMapping("/{eventId}/publish")
+    @PatchMapping(value = "/{eventId}/publish", produces = "application/json")
     public EventFullDto publishEvent(@PathVariable Long eventId) {
         log.info("publish event with id = {}", eventId);
         return eventService.publishEvent(eventId);
     }
 
-    @PatchMapping("/{eventId}/reject")
+    @PatchMapping(value = "/{eventId}/reject", produces = "application/json")
     public EventFullDto rejectEvent(@PathVariable Long eventId) {
         log.info("reject event with id = {}", eventId);
         return eventService.rejectEvent(eventId);

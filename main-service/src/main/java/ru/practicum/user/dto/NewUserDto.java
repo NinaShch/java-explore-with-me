@@ -1,19 +1,18 @@
 package ru.practicum.user.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @RequiredArgsConstructor
 public class NewUserDto {
     @NotBlank
+    @Length(max = 128)
     private String name;
-    @NotBlank
     @Email
     private String email;
 }

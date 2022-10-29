@@ -2,9 +2,9 @@ package ru.practicum.event;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.practicum.category.model.Category;
-import ru.practicum.event.model.Event;
-import ru.practicum.user.model.User;
+import ru.practicum.category.entity.Category;
+import ru.practicum.event.entity.Event;
+import ru.practicum.user.entity.User;
 
 import java.util.List;
 

@@ -1,28 +1,15 @@
 package ru.practicum.category;
 
+import org.mapstruct.Mapper;
 import ru.practicum.category.dto.CategoryDto;
 import ru.practicum.category.dto.NewCategoryDto;
-import ru.practicum.category.model.Category;
+import ru.practicum.category.entity.Category;
 
-public class CategoryMapper {
-    public static CategoryDto toCategoryDto(Category category) {
-        return new CategoryDto(
-                category.getId(),
-                category.getName()
-        );
-    }
+@Mapper(componentModel = "spring")
+public interface CategoryMapper {
+    CategoryDto toCategoryDto(Category category);
 
-    public static Category toCategory(CategoryDto categoryDto) {
-        return new Category(
-                categoryDto.getId(),
-                categoryDto.getName()
-        );
-    }
+    Category toCategory(CategoryDto categoryDto);
 
-    public static Category toNewCategory(NewCategoryDto newCategoryDto) {
-        return new Category(
-                null,
-                newCategoryDto.getName()
-        );
-    }
+    Category toNewCategory(NewCategoryDto newCategoryDto);
 }

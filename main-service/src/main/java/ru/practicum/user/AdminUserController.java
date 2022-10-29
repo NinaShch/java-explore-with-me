@@ -1,4 +1,4 @@
-package ru.practicum.admin;
+package ru.practicum.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class AdminUserController {
 
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping(produces = "application/json", consumes = "application/json")
     public UserDto addUser(@Valid @RequestBody NewUserDto newUserDto) {
         return userService.addNewUser(newUserDto);
     }
@@ -30,7 +30,7 @@ public class AdminUserController {
         userService.deleteUser(userId);
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<UserDto> getUsersByAdmin(
             @RequestParam(required = false) Long[] ids,
             @RequestParam(required = false, defaultValue = "0") int from,

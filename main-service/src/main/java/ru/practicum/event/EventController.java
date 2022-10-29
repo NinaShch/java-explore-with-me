@@ -19,7 +19,7 @@ public class EventController {
 
     private final EventService eventService;
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<EventShortDto> getEvents(
             @RequestParam(required = false) String text,
             @RequestParam(required = false) long[] categories,
@@ -36,12 +36,12 @@ public class EventController {
                 onlyAvailable, sort, from, size);
     }
 
-    @GetMapping("/{eventId}")
+    @GetMapping(value = "/{eventId}", produces = "application/json")
     public EventFullDto getEventById(@PathVariable Long eventId, HttpServletRequest request) {
         log.info("request event id = {}", eventId);
         log.info("client ip: {}", request.getRemoteAddr());
         log.info("endpoint path: {}", request.getRequestURI());
-        return EventMapper.toEventFullDto(eventService.getEventById(eventId, request));
+        return eventService.getEventById(eventId, request);
     }
 }
 

@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+import javax.validation.constraints.NotNull;
+
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -12,6 +14,7 @@ public class UpdateEventDto {
     private Long category;
     private String description;
     private String eventDate;
+    @NotNull
     private Long eventId;
     private boolean paid;
     private int participantLimit;

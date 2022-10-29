@@ -1,19 +1,17 @@
-package ru.practicum.compilation;
+package ru.practicum.compilation.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.event.model.Event;
+import ru.practicum.event.entity.Event;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
 @Table(name = "compilations")
 public class Compilation {
     @Id

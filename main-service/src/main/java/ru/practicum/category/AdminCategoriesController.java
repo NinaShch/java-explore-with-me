@@ -1,4 +1,4 @@
-package ru.practicum.admin;
+package ru.practicum.category;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +17,13 @@ public class AdminCategoriesController {
 
     private final CategoryService categoryService;
 
-    @PatchMapping
+    @PatchMapping (produces = "application/json", consumes = "application/json")
     public CategoryDto updateCategory(@RequestBody CategoryDto categoryDto) {
         log.info("request update category id = {}", categoryDto.getId());
         return categoryService.updateCategory(categoryDto);
     }
 
-    @PostMapping
+    @PostMapping(produces = "application/json", consumes = "application/json")
     public CategoryDto createCategory(@RequestBody NewCategoryDto newCategoryDto) {
         log.info("request create new category {}", newCategoryDto.getName());
         return categoryService.createCategory(newCategoryDto);

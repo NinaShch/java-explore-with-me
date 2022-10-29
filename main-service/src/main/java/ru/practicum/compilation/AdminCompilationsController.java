@@ -1,10 +1,9 @@
-package ru.practicum.admin;
+package ru.practicum.compilation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.compilation.CompilationService;
 import ru.practicum.compilation.dto.CompilationDto;
 import ru.practicum.compilation.dto.NewCompilationDto;
 
@@ -19,7 +18,7 @@ public class AdminCompilationsController {
 
     private final CompilationService compilationService;
 
-    @PostMapping
+    @PostMapping(produces = "application/json", consumes = "application/json")
     public CompilationDto addCompilation(@Valid @RequestBody NewCompilationDto newCompilationDto) {
         log.info("request add compilation");
         return compilationService.addCompilation(newCompilationDto);

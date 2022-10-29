@@ -1,20 +1,14 @@
 package ru.practicum.request;
 
-import java.time.format.DateTimeFormatter;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.request.entity.ParticipationRequest;
 
-public class ParticipationRequestMapper {
-
-    private ParticipationRequestMapper() {
-    }
-
-    public static ParticipationRequestDto toParticipationRequestDto(ParticipationRequest participationRequest) {
-        return ParticipationRequestDto
-                .builder()
-                .created(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(participationRequest.getCreated()))
-                .event(participationRequest.getEvent().getId())
-                .requester(participationRequest.getRequester().getId())
-                .status(participationRequest.getStatus())
-                .id(participationRequest.getId())
-                .build();
-    }
+@Mapper(componentModel = "spring")
+public interface ParticipationRequestMapper {
+    @Mapping(target = "created", source = "participationRequest.created", dateFormat = "yyyy-MM-dd HH:mm:ss")
+    @Mapping(target = "event", source = "participationRequest.event.id")
+    @Mapping(target = "requester", source = "participationRequest.requester.id")
+    ParticipationRequestDto toParticipationRequestDto(ParticipationRequest participationRequest);
 }

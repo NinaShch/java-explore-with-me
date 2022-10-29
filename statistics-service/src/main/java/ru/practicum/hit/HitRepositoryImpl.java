@@ -37,4 +37,23 @@ public class HitRepositoryImpl implements HitRepository {
         return entityManager.createQuery(cr).getResultList();
     }
 
+    @Override
+    public List<ViewStatsDto> getStatsByUri(LocalDateTime start, LocalDateTime end, String uri, boolean unique) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<ViewStatsDto> cr = cb.createQuery(ViewStatsDto.class);
+        Root<EndpointHit> root = cr.from(EndpointHit.class);
+        if (unique) {
+            cr.multiselect(root.get("app"), root.get("uri"), cb.countDistinct(root.get("ip")));
+        } else {
+            cr.multiselect(root.get("app"), root.get("uri"), cb.count(root));
+        }
+        cr.groupBy(root.get("app"), root.get("uri"));
+        cr.where(cb.and(
+                cb.greaterThanOrEqualTo(root.get("timestamp"), start),
+                cb.lessThanOrEqualTo(root.get("timestamp"), end),
+                cb.equal(root.get("uri"), uri)
+        ));
+        return entityManager.createQuery(cr).getResultList();
+    }
+
 }
