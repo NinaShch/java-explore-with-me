@@ -10,6 +10,7 @@ import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventDto;
 import ru.practicum.request.dto.ParticipationRequestDto;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -42,7 +43,7 @@ public class UserController {
     @PostMapping(value = "/{userId}/events", produces = "application/json", consumes = "application/json")
     public EventFullDto createEventByUser(
             @PathVariable Long userId,
-            @RequestBody NewEventDto newEventDto) {
+            @RequestBody @Valid NewEventDto newEventDto) {
         log.info("request to create event = {}, by user id = {}", newEventDto.getTitle(), userId);
         return userService.createEventByUser(userId, newEventDto);
     }

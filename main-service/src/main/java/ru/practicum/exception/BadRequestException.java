@@ -1,6 +1,7 @@
 package ru.practicum.exception;
 
 import lombok.Getter;
+import ru.practicum.DateTimeUtils;
 
 @Getter
 public class BadRequestException extends RuntimeException {
@@ -11,7 +12,14 @@ public class BadRequestException extends RuntimeException {
     public BadRequestException(String message, String reason) {
         super(message);
         status = "BAD_REQUEST";
-        timestamp = DateTimeConverter.getDateTimeNow();
+        timestamp = DateTimeUtils.getDateTimeNow();
+        this.reason = reason;
+    }
+
+    public BadRequestException(String message, String reason, Throwable e) {
+        super(message, e);
+        status = "BAD_REQUEST";
+        timestamp = DateTimeUtils.getDateTimeNow();
         this.reason = reason;
     }
 }

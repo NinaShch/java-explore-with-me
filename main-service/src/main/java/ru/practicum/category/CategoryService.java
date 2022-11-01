@@ -11,6 +11,7 @@ import ru.practicum.category.entity.Category;
 import ru.practicum.event.EventRepository;
 import ru.practicum.event.entity.Event;
 import ru.practicum.exception.ForbiddenException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.paging.OffsetLimitPageable;
 
 import java.util.List;
@@ -32,14 +33,14 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    public CategoryDto getCategoryById(Long catId) {
+    public CategoryDto getCategoryDtoById(Long catId) {
         return categoryMapper.toCategoryDto(helperService.getCategoryById(catId));
     }
 
     public CategoryDto updateCategory(CategoryDto categoryDto) {
-        Category category = helperService.getCategoryById(categoryDto.getId());
-        category.setName(categoryDto.getName());
-        return categoryMapper.toCategoryDto(categoryRepository.save(category));
+        if (categoryRepository.existsById(categoryDto.getId()))
+            return categoryMapper.toCategoryDto(categoryRepository.save(categoryMapper.toCategory(categoryDto)));
+        else throw new NotFoundException(String.format("Category with id= %d was not found.", categoryDto.getId()));
     }
 
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
@@ -49,7 +50,7 @@ public class CategoryService {
     public void deleteCategory(Long categoryId) {
         Category category = helperService.getCategoryById(categoryId);
         List<Event> events = eventRepository.findByCategory(category);
-        if (!events.isEmpty()) throw new ForbiddenException("Category with events", "Category with events");
+        if (!events.isEmpty()) throw new ForbiddenException("Category with events");
         categoryRepository.delete(category);
     }
 }

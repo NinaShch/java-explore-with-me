@@ -8,9 +8,7 @@ import ru.practicum.HelperService;
 import ru.practicum.compilation.dto.CompilationDto;
 import ru.practicum.compilation.dto.NewCompilationDto;
 import ru.practicum.compilation.entity.Compilation;
-import ru.practicum.event.EventRepository;
 import ru.practicum.event.entity.Event;
-import ru.practicum.exception.ExceptionMessage;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.paging.OffsetLimitPageable;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CompilationService {
 
-    private final EventRepository eventRepository;
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
     private final HelperService helperService;
@@ -73,7 +70,7 @@ public class CompilationService {
         Event event = helperService.getEventById(eventId);
 
         if (containsEvent(compilation, event)) {
-            throw new ForbiddenException("Event already present in compilation", ExceptionMessage.CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Event already present in compilation");
         }
 
         compilation.getEvents().add(event);
@@ -83,7 +80,7 @@ public class CompilationService {
     public void unpinCompilation(Long compId) {
         Compilation compilation = helperService.getCompilationById(compId);
         if (!compilation.isPinned()) {
-            throw new ForbiddenException("Compilation is not pinned", ExceptionMessage.CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Compilation is not pinned");
         }
         compilation.setPinned(false);
         compilationRepository.save(compilation);
@@ -92,7 +89,7 @@ public class CompilationService {
     public void pinCompilation(Long compId) {
         Compilation compilation = helperService.getCompilationById(compId);
         if (compilation.isPinned()) {
-            throw new ForbiddenException("Compilation is already pinned", ExceptionMessage.CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Compilation is already pinned");
         }
         compilation.setPinned(true);
         compilationRepository.save(compilation);

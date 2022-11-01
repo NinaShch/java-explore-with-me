@@ -5,12 +5,11 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
+import ru.practicum.DateTimeUtils;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,7 +18,8 @@ public class StatHitClient extends BaseClient {
 
     private static final String API_PREFIX = "/";
 
-    public StatHitClient(@Value("${statistics-service.url}") String serverUrl, RestTemplateBuilder builder) {
+    public StatHitClient(@Value("${statistics-service.url}") String serverUrl,
+                         RestTemplateBuilder builder) {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl + API_PREFIX))
@@ -45,11 +45,11 @@ public class StatHitClient extends BaseClient {
     }
 */
 
-    public Long statsRequest(Long eventId) {
-        String[] uris = new String[] { "/event/" + eventId };
+    public Optional<Long> statsRequest(Long eventId) {
+        String[] uris = new String[]{"/event/" + eventId};
 
-        String start = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now().minusMonths(6));
-        String end = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
+        String start = DateTimeUtils.getDateTimeSixMonthsAgo();
+        String end = DateTimeUtils.getDateTimeNow();
 
         Map<String, Object> parameters = Map.of(
                 "start", URLEncoder.encode(start, Charset.defaultCharset()),
@@ -60,23 +60,20 @@ public class StatHitClient extends BaseClient {
         ViewStatsDto[] viewStatsArray = get("/stats?start={start}&end={end}&uris={uris}", parameters, ViewStatsDto[].class).getBody();
         if (viewStatsArray != null) {
             if (viewStatsArray.length == 0) {
-                return 0L;
+                return Optional.of(0L);
             }
             ViewStatsDto viewStats = viewStatsArray[0];
             if (viewStats != null) {
-                return viewStats.getHits();
-            } else {
-                return null;
+                return Optional.of(viewStats.getHits());
             }
-        } else {
-            return null;
         }
+        return Optional.empty();
     }
 
     public Map<Long, Long> viewsMapRequest(List<Long> eventIds) {
         List<String> uris = eventIds.stream().map(eventId -> "/event/" + eventId).collect(Collectors.toList());
-        String start = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now().minusMonths(6));
-        String end = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
+        String start = DateTimeUtils.getDateTimeSixMonthsAgo();
+        String end = DateTimeUtils.getDateTimeNow();
 
         Map<String, Object> parameters = Map.of(
                 "start", URLEncoder.encode(start, Charset.defaultCharset()),

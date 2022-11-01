@@ -29,7 +29,7 @@ public class CategoryController {
     @GetMapping(value = "/{catId}", produces = "application/json")
     public CategoryDto getCategoryById(@PathVariable Long catId) {
         log.info("request category id = {}", catId);
-        return categoryService.getCategoryById(catId);
+        return categoryService.getCategoryDtoById(catId);
     }
 
 }

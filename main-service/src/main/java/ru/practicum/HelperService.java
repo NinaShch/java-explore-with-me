@@ -8,19 +8,17 @@ import ru.practicum.compilation.CompilationRepository;
 import ru.practicum.compilation.entity.Compilation;
 import ru.practicum.event.EventRepository;
 import ru.practicum.event.entity.Event;
-import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.UserRepository;
 import ru.practicum.user.entity.User;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-
 @Service
 @RequiredArgsConstructor
-public class HelperService {
+// если методы из этого класса перенести в контекстные классы,
+// то так как они используются не только в своих сервисах,
+// получается циклическая зависимость у UserService и EventService
 
+public class HelperService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
@@ -46,14 +44,4 @@ public class HelperService {
                 .orElseThrow(() -> new NotFoundException(String.format("Compilation with id= %d was not found.", id)));
     }
 
-    public LocalDateTime parseDate(String dateString) {
-        if (dateString == null) {
-            return null;
-        }
-        try {
-            return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        } catch (DateTimeParseException ex) {
-            throw new BadRequestException("Wrong datetime " + dateString, "Wrong dateTime format");
-        }
-    }
 }

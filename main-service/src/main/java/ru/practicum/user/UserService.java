@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.DateTimeUtils;
 import ru.practicum.HelperService;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.client.StatHitClient;
@@ -33,8 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.exception.ExceptionMessage.CONDITIONS_NOT_MET;
-
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -62,12 +61,12 @@ public class UserService {
         Event event = helperService.getEventById(updateEventDto.getEventId());
 
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can update event", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can update event");
         }
         if (event.getState().equals(State.PUBLISHED))
-            throw new ForbiddenException("Only pending or canceled events can be changed", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only pending or canceled events can be changed");
 
-        LocalDateTime eventDate = helperService.parseDate(updateEventDto.getEventDate());
+        LocalDateTime eventDate = DateTimeUtils.parseDate(updateEventDto.getEventDate());
         validateEventDate(eventDate);
 
         event.setAnnotation(updateEventDto.getAnnotation());
@@ -79,7 +78,7 @@ public class UserService {
         event.setTitle(updateEventDto.getTitle());
         if (event.getState().equals(State.CANCELED)) event.setState(State.PENDING);
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()));
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()).orElse(0L));
 
     }
 
@@ -88,45 +87,45 @@ public class UserService {
         categoryRepository.findById(newEventDto.getCategory()).orElseThrow(
                 () -> new NotFoundException("Category not found"));
 
-        LocalDateTime eventDate = helperService.parseDate(newEventDto.getEventDate());
+        LocalDateTime eventDate = DateTimeUtils.parseDate(newEventDto.getEventDate());
         validateEventDate(eventDate);
 
         Event event = eventMapper.toEvent(newEventDto, user, LocalDateTime.now());
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()));
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
     }
 
     public EventFullDto getEventByUserAndId(Long userId, Long eventId) {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can get event details", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can get event details");
         }
 
-        return eventMapper.toEventFullDto(event, statHitClient.statsRequest(event.getId()));
+        return eventMapper.toEventFullDto(event, statHitClient.statsRequest(event.getId()).orElse(0L));
     }
 
     public EventFullDto cancelEvent(Long userId, Long eventId) {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can cancel events", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can cancel events");
         }
         if (event.getState() != State.PENDING) {
-            throw new ForbiddenException("Only pending events can be cancelled", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only pending events can be cancelled");
         }
 
         event.setState(State.CANCELED);
         Event cancelledEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(cancelledEvent, statHitClient.statsRequest(cancelledEvent.getId()));
+        return eventMapper.toEventFullDto(cancelledEvent, statHitClient.statsRequest(cancelledEvent.getId()).orElse(0L));
     }
 
     public List<ParticipationRequestDto> getEventRequestsByUserAndId(Long userId, Long eventId) {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can get event requests", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can get event requests");
         }
 
         return participationRequestRepository.findByEvent(event)
@@ -139,13 +138,13 @@ public class UserService {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can confirm requests", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can confirm requests");
         }
 
         // нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие
         // из сваггера - Ограничение на количество участников. Значение 0 - означает отсутствие ограничения
         if (event.getParticipantLimit() > 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            throw new ForbiddenException("Participant limit reached", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Participant limit reached");
         }
 
         ParticipationRequest participationRequest = getParticipationRequestById(reqId);
@@ -168,7 +167,7 @@ public class UserService {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (!event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Only the initiator can reject requests", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the initiator can reject requests");
         }
 
         ParticipationRequest participationRequest = getParticipationRequestById(reqId);
@@ -187,7 +186,7 @@ public class UserService {
         if (eventDate
                 .minusHours(2)
                 .isBefore(LocalDateTime.now()))
-            throw new ForbiddenException("Event time should be at least two hours after now", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Event time should be at least two hours after now");
     }
 
     public UserDto addNewUser(NewUserDto newUserDto) {
@@ -226,16 +225,16 @@ public class UserService {
         User user = helperService.getUserById(userId);
         Event event = helperService.getEventById(eventId);
         if (event.getInitiator().equals(user)) {
-            throw new ForbiddenException("Can't request own events", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Can't request own events");
         }
         if (!participationRequestRepository.findByEventAndRequester(event, user).isEmpty()) {
-            throw new ForbiddenException("Request for this event already exists", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Request for this event already exists");
         }
         if (event.getState() != State.PUBLISHED) {
-            throw new ForbiddenException("Only published events can be requested", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only published events can be requested");
         }
         if (event.getParticipantLimit() > 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            throw new ForbiddenException("Participant limit reached", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Participant limit reached");
         }
 
         ParticipationRequest participationRequest = ParticipationRequest.builder()
@@ -258,7 +257,7 @@ public class UserService {
         ParticipationRequest request = getParticipationRequestById(requestId);
 
         if (!request.getRequester().equals(user)) {
-            throw new ForbiddenException("Only the requesor can cancel requests", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only the requesor can cancel requests");
         }
 
         request.setStatus(Status.CANCELED);

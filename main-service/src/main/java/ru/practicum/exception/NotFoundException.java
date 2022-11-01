@@ -1,6 +1,7 @@
 package ru.practicum.exception;
 
 import lombok.Getter;
+import ru.practicum.DateTimeUtils;
 
 @Getter
 public class NotFoundException extends RuntimeException {
@@ -12,6 +13,6 @@ public class NotFoundException extends RuntimeException {
         super(message);
         status = "NOT_FOUND";
         reason = "The required object was not found.";
-        timestamp = DateTimeConverter.getDateTimeNow();
+        timestamp = DateTimeUtils.getDateTimeNow();
     }
 }

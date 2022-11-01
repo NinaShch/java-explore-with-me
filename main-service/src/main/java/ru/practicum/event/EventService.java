@@ -1,10 +1,10 @@
 package ru.practicum.event;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.DateTimeUtils;
 import ru.practicum.HelperService;
-import ru.practicum.category.CategoryRepository;
+import ru.practicum.category.CategoryService;
 import ru.practicum.category.entity.Category;
 import ru.practicum.client.HitDto;
 import ru.practicum.client.StatHitClient;
@@ -15,29 +15,23 @@ import ru.practicum.event.entity.Event;
 import ru.practicum.event.entity.State;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ForbiddenException;
-import ru.practicum.user.UserRepository;
 import ru.practicum.user.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static ru.practicum.exception.ExceptionMessage.CONDITIONS_NOT_MET;
-
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EventService {
     private final EventRepository eventRepository;
-    private final CategoryRepository categoryRepository;
-    private final UserRepository userRepository;
     private final StatHitClient statHitClient;
     private final EventMapper eventMapper;
     private final HelperService helperService;
+    private final CategoryService categoryService;
 
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         statHitClient.hitRequest(
@@ -45,11 +39,10 @@ public class EventService {
                         "mainService",
                         request.getRequestURI(),
                         request.getRemoteAddr(),
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now())));
+                        DateTimeUtils.getDateTimeNow()));
 
         Event event = helperService.getEventById(eventId);
-
-        Long hits = statHitClient.statsRequest(eventId);
+        Long hits = statHitClient.statsRequest(eventId).orElse(0L);
         return eventMapper.toEventFullDto(event, hits);
     }
 
@@ -69,15 +62,16 @@ public class EventService {
                 users,
                 states,
                 categories,
-                helperService.parseDate(rangeStart),
-                helperService.parseDate(rangeEnd),
+                DateTimeUtils.parseDate(rangeStart),
+                DateTimeUtils.parseDate(rangeEnd),
                 from,
                 size
         );
 
         return gotEvents
                 .stream()
-                .map((event) -> eventMapper.toEventFullDto(event, statHitClient.statsRequest(event.getId())))
+                .map((event) -> eventMapper
+                        .toEventFullDto(event, statHitClient.statsRequest(event.getId()).orElse(0L)))
                 .collect(Collectors.toList());
     }
 
@@ -107,8 +101,8 @@ public class EventService {
                 text,
                 categories,
                 paid,
-                helperService.parseDate(rangeStart),
-                helperService.parseDate(rangeEnd),
+                DateTimeUtils.parseDate(rangeStart),
+                DateTimeUtils.parseDate(rangeEnd),
                 onlyAvailable,
                 from,
                 size
@@ -124,8 +118,8 @@ public class EventService {
                 text,
                 categories,
                 paid,
-                helperService.parseDate(rangeStart),
-                helperService.parseDate(rangeEnd),
+                DateTimeUtils.parseDate(rangeStart),
+                DateTimeUtils.parseDate(rangeEnd),
                 onlyAvailable,
                 from,
                 size
@@ -163,7 +157,7 @@ public class EventService {
             event.setDescription(newEventDto.getDescription());
         }
         if (newEventDto.getEventDate() != null) {
-            event.setEventDate(helperService.parseDate(newEventDto.getEventDate()));
+            event.setEventDate(DateTimeUtils.parseDate(newEventDto.getEventDate()));
         }
         if (newEventDto.getLocation() != null) {
             event.setLocation(newEventDto.getLocation());
@@ -175,7 +169,7 @@ public class EventService {
         event.setParticipantLimit(newEventDto.getParticipantLimit());
         event.setRequestModeration(newEventDto.isRequestModeration());
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()));
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()).orElse(0L));
     }
 
     public EventFullDto publishEvent(Long eventId) {
@@ -184,27 +178,27 @@ public class EventService {
         if (event.getEventDate()
                 .minusHours(1)
                 .isBefore(LocalDateTime.now()))
-            throw new ForbiddenException("Event time should be at least two hours after now", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Event time should be at least two hours after now");
 
         if (event.getState() != State.PENDING) {
-            throw new ForbiddenException("Only pending events can be published", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Only pending events can be published");
         }
 
         event.setState(State.PUBLISHED);
         Event savedEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()));
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
     }
 
     public EventFullDto rejectEvent(Long eventId) {
         Event event = helperService.getEventById(eventId);
         if (event.getState() == State.PUBLISHED) {
-            throw new ForbiddenException("Already published events can't be rejected", CONDITIONS_NOT_MET);
+            throw new ForbiddenException("Already published events can't be rejected");
         }
 
         event.setState(State.CANCELED);
         Event savedEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()));
+        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
     }
 }

@@ -14,18 +14,18 @@ import javax.validation.constraints.NotNull;
 @RequiredArgsConstructor
 public class EventShortDto {
     @NotBlank
-    String annotation;
+    private String annotation;
     @NotNull
-    CategoryDto category;
-    int confirmedRequests;
+    private CategoryDto category;
+    private int confirmedRequests;
     @NotBlank
-    String eventDate;
-    Long id;
+    private String eventDate;
+    private Long id;
     @NotNull
-    UserShortDto initiator;
+    private UserShortDto initiator;
     @NotNull
-    boolean paid;
+    private boolean paid;
     @NotBlank
-    String title;
-    Long views;
+    private String title;
+    private Long views;
 }

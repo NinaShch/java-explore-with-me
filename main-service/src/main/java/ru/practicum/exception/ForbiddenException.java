@@ -1,6 +1,7 @@
 package ru.practicum.exception;
 
 import lombok.Getter;
+import ru.practicum.DateTimeUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,12 +14,12 @@ public class ForbiddenException extends RuntimeException {
     private final String reason;
     private final String timestamp;
 
-    public ForbiddenException(String message, String reason) {
+    public ForbiddenException(String message) {
         super(message);
         errors = new ArrayList<>();
         errors.add(Arrays.toString(this.getStackTrace()));
         status = "FORBIDDEN";
-        timestamp = DateTimeConverter.getDateTimeNow();
-        this.reason = reason;
+        timestamp = DateTimeUtils.getDateTimeNow();
+        reason = "For the requested operation the conditions are not met.";
     }
 }

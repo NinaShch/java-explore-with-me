@@ -1,6 +1,7 @@
 package ru.practicum.exception;
 
 import lombok.Getter;
+import ru.practicum.DateTimeUtils;
 
 @Getter
 public class InternalServerErrorException extends RuntimeException {
@@ -13,6 +14,6 @@ public class InternalServerErrorException extends RuntimeException {
         super(message);
         status = "INTERNAL_SERVER_ERROR";
         reason = "Error occurred";
-        timestamp = DateTimeConverter.getDateTimeNow();
+        timestamp = DateTimeUtils.getDateTimeNow();
     }
 }
