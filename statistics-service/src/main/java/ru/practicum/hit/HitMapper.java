@@ -1,7 +1,8 @@
 package ru.practicum.hit;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import ru.practicum.DateTimeUtils;
+import ru.practicum.hit.dto.EndpointHitDto;
+import ru.practicum.hit.entity.EndpointHit;
 
 public class HitMapper {
 
@@ -11,7 +12,7 @@ public class HitMapper {
                 endpointHitDto.getApp(),
                 endpointHitDto.getUri(),
                 endpointHitDto.getIp(),
-                LocalDateTime.parse(endpointHitDto.getTimestamp(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                DateTimeUtils.parseDate(endpointHitDto.getTimestamp())
         );
     }
 }

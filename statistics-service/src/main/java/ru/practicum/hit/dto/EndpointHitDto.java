@@ -1,4 +1,4 @@
-package ru.practicum.hit;
+package ru.practicum.hit.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

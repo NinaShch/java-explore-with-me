@@ -1,4 +1,4 @@
-package ru.practicum.hit;
+package ru.practicum.hit.entity;
 
 import lombok.*;
 

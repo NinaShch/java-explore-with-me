@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.DateTimeUtils;
 import ru.practicum.HelperService;
-import ru.practicum.category.CategoryService;
 import ru.practicum.category.entity.Category;
 import ru.practicum.client.HitDto;
 import ru.practicum.client.StatHitClient;
@@ -31,7 +30,6 @@ public class EventService {
     private final StatHitClient statHitClient;
     private final EventMapper eventMapper;
     private final HelperService helperService;
-    private final CategoryService categoryService;
 
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         statHitClient.hitRequest(
@@ -39,7 +37,7 @@ public class EventService {
                         "mainService",
                         request.getRequestURI(),
                         request.getRemoteAddr(),
-                        DateTimeUtils.getDateTimeNow()));
+                        DateTimeUtils.getDateTime(LocalDateTime.now())));
 
         Event event = helperService.getEventById(eventId);
         Long hits = statHitClient.statsRequest(eventId).orElse(0L);
@@ -128,7 +126,11 @@ public class EventService {
         Map<Long, Long> viewsMap = statHitClient.viewsMapRequest(
                 gotEvents.stream().map(Event::getId).collect(Collectors.toList())
         );
-        gotEvents.sort(new EventByViewsComparator(viewsMap));
+        gotEvents.sort((Event e1, Event e2) -> {
+            Long v1 = viewsMap.get(e1.getId());
+            Long v2 = viewsMap.get(e2.getId());
+            return Long.compare(v1 != null ? v1 : 0L, v2 != null ? v2 : 0L);
+        });
         return gotEvents
                 .stream()
                 .skip(from)

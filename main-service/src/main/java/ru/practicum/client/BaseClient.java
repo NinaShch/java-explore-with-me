@@ -41,7 +41,7 @@ public abstract class BaseClient {
                 statsServerResponse = rest.exchange(path, method, requestEntity, responseClass);
             }
         } catch (HttpStatusCodeException e) {
-            throw new InternalServerErrorException("Stats request failed");
+            throw new InternalServerErrorException("Stats request failed", e);
         }
         return prepareResponse(statsServerResponse);
     }

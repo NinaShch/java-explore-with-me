@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import ru.practicum.event.entity.Status;
 
-import javax.validation.constraints.NotNull;
-
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -16,9 +14,7 @@ import javax.validation.constraints.NotNull;
 public class ParticipationRequestDto {
 
     private String created;
-    @NotNull
     private Long event;
-    @NotNull
     private Long requester;
     private Status status;
     private Long id;

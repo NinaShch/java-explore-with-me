@@ -10,6 +10,7 @@ import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,8 +49,8 @@ public class StatHitClient extends BaseClient {
     public Optional<Long> statsRequest(Long eventId) {
         String[] uris = new String[]{"/event/" + eventId};
 
-        String start = DateTimeUtils.getDateTimeSixMonthsAgo();
-        String end = DateTimeUtils.getDateTimeNow();
+        String start = DateTimeUtils.getDateTime(LocalDateTime.now().minusMonths(6));
+        String end = DateTimeUtils.getDateTime(LocalDateTime.now());
 
         Map<String, Object> parameters = Map.of(
                 "start", URLEncoder.encode(start, Charset.defaultCharset()),
@@ -72,8 +73,8 @@ public class StatHitClient extends BaseClient {
 
     public Map<Long, Long> viewsMapRequest(List<Long> eventIds) {
         List<String> uris = eventIds.stream().map(eventId -> "/event/" + eventId).collect(Collectors.toList());
-        String start = DateTimeUtils.getDateTimeSixMonthsAgo();
-        String end = DateTimeUtils.getDateTimeNow();
+        String start = DateTimeUtils.getDateTime(LocalDateTime.now().minusMonths(6));
+        String end = DateTimeUtils.getDateTime(LocalDateTime.now());
 
         Map<String, Object> parameters = Map.of(
                 "start", URLEncoder.encode(start, Charset.defaultCharset()),

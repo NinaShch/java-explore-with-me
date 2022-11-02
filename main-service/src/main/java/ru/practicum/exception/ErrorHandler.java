@@ -48,7 +48,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleInternalServerErrorException(final InternalServerErrorException e) {
         log.error("Exception", e);
         return new ErrorResponse(

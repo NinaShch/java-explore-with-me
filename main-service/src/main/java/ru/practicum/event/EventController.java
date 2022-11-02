@@ -2,7 +2,6 @@ package ru.practicum.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
@@ -11,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
-@Validated
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping(path = "/events")

@@ -2,6 +2,7 @@ package ru.practicum.hit;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.hit.dto.EndpointHitDto;
 
 @Service
 @RequiredArgsConstructor

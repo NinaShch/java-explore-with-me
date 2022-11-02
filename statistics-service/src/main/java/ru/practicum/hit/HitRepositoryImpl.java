@@ -2,7 +2,8 @@ package ru.practicum.hit;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import ru.practicum.stats.ViewStatsDto;
+import ru.practicum.hit.entity.EndpointHit;
+import ru.practicum.stats.dto.ViewStatsDto;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;

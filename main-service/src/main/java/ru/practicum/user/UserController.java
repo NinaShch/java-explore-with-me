@@ -35,7 +35,7 @@ public class UserController {
     @PatchMapping(value = "/{userId}/events", produces = "application/json", consumes = "application/json")
     public EventFullDto updateEventByUser(
             @PathVariable Long userId,
-            @RequestBody UpdateEventDto updateEventDto) {
+            @RequestBody @Valid UpdateEventDto updateEventDto) {
         log.info("request to update event id = {}, by user id = {}", updateEventDto.getEventId(), userId);
         return userService.updateEventByUser(userId, updateEventDto);
     }
