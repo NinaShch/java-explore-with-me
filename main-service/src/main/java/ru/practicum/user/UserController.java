@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.comment.dto.CommentDto;
+import ru.practicum.comment.dto.NewCommentDto;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -119,5 +121,33 @@ public class UserController {
     ) {
         log.info("cancel event request with id = {} by user id = {}", requestId, userId);
         return userService.cancelRequest(userId, requestId);
+    }
+
+    @PostMapping(value = "{userId}/comments/{eventId}", produces = "application/json", consumes = "application/json")
+    public CommentDto createComment(
+            @PathVariable Long userId,
+            @PathVariable Long eventId,
+            @Valid @RequestBody NewCommentDto newCommentDto
+    ) {
+        log.info("User id = {} create comment to event id = {}", userId, eventId);
+        return userService.createComment(userId, eventId, newCommentDto);
+    }
+
+    @DeleteMapping(value = "{userId}/comments/{commentId}")
+    public void deleteCommentByAuthor(
+            @PathVariable Long userId,
+            @PathVariable Long commentId
+    ) {
+        log.info("attempt to delete comment id = {} by user id = {} ", commentId, userId);
+        userService.deleteComment(userId, commentId);
+    }
+
+    @PatchMapping(value = "{userId}/comments/", produces = "application/json", consumes = "application/json")
+    public CommentDto updateComment(
+            @PathVariable Long userId,
+            @Valid @RequestBody CommentDto commentDto
+    ) {
+        log.info("Attempt user id = {} update comment", userId);
+        return userService.updateCommentByUser(userId, commentDto);
     }
 }

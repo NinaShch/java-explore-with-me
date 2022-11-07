@@ -7,6 +7,8 @@ import ru.practicum.HelperService;
 import ru.practicum.category.entity.Category;
 import ru.practicum.client.HitDto;
 import ru.practicum.client.StatHitClient;
+import ru.practicum.comment.CommentMapper;
+import ru.practicum.comment.CommentRepository;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -30,6 +32,8 @@ public class EventService {
     private final StatHitClient statHitClient;
     private final EventMapper eventMapper;
     private final HelperService helperService;
+    private  final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
 
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         statHitClient.hitRequest(
@@ -41,7 +45,7 @@ public class EventService {
 
         Event event = helperService.getEventById(eventId);
         Long hits = statHitClient.statsRequest(eventId).orElse(0L);
-        return eventMapper.toEventFullDto(event, hits);
+        return eventMapper.toEventFullDto(event, hits, helperService.getCommentsByEvent(event));
     }
 
     public List<EventFullDto> getEventByParamsForAdmin(long[] userIds, String[] stateStrings, long[] categoryIds,
@@ -69,7 +73,9 @@ public class EventService {
         return gotEvents
                 .stream()
                 .map((event) -> eventMapper
-                        .toEventFullDto(event, statHitClient.statsRequest(event.getId()).orElse(0L)))
+                        .toEventFullDto(event,
+                                statHitClient.statsRequest(event.getId()).orElse(0L),
+                                helperService.getCommentsByEvent(event)))
                 .collect(Collectors.toList());
     }
 
@@ -171,7 +177,9 @@ public class EventService {
         event.setParticipantLimit(newEventDto.getParticipantLimit());
         event.setRequestModeration(newEventDto.isRequestModeration());
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(savedEvent,
+                statHitClient.statsRequest(event.getId()).orElse(0L),
+                helperService.getCommentsByEvent(savedEvent));
     }
 
     public EventFullDto publishEvent(Long eventId) {
@@ -189,7 +197,9 @@ public class EventService {
         event.setState(State.PUBLISHED);
         Event savedEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(savedEvent,
+                statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
+                helperService.getCommentsByEvent(event));
     }
 
     public EventFullDto rejectEvent(Long eventId) {
@@ -201,6 +211,8 @@ public class EventService {
         event.setState(State.CANCELED);
         Event savedEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(savedEvent,
+                statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
+                helperService.getCommentsByEvent(event));
     }
 }

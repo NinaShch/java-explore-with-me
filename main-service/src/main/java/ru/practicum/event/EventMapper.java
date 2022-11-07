@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 import ru.practicum.DateTimeUtils;
 import ru.practicum.category.CategoryMapper;
 import ru.practicum.category.CategoryService;
+import ru.practicum.comment.dto.CommentDto;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -13,6 +14,7 @@ import ru.practicum.user.UserMapper;
 import ru.practicum.user.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper(
         componentModel = "spring",
@@ -30,7 +32,7 @@ public interface EventMapper {
     @Mapping(target = "createdOn", source = "event.createdOn", dateFormat = DateTimeUtils.DATE_TIME_FORMAT)
     @Mapping(target = "publishedOn", source = "event.publishedOn", dateFormat = DateTimeUtils.DATE_TIME_FORMAT)
     @Mapping(target = "views", source = "hits")
-    EventFullDto toEventFullDto(Event event, Long hits);
+    EventFullDto toEventFullDto(Event event, Long hits, List<CommentDto> comments);
 
     @Mapping(target = "category", source = "newEventDto.category")
     @Mapping(target = "initiator", source = "user")
