@@ -7,8 +7,6 @@ import ru.practicum.HelperService;
 import ru.practicum.category.entity.Category;
 import ru.practicum.client.HitDto;
 import ru.practicum.client.StatHitClient;
-import ru.practicum.comment.CommentMapper;
-import ru.practicum.comment.CommentRepository;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -32,8 +30,6 @@ public class EventService {
     private final StatHitClient statHitClient;
     private final EventMapper eventMapper;
     private final HelperService helperService;
-    private  final CommentRepository commentRepository;
-    private final CommentMapper commentMapper;
 
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         statHitClient.hitRequest(
