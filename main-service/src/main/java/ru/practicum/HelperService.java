@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.category.entity.Category;
-import ru.practicum.comment.CommentMapper;
 import ru.practicum.comment.CommentRepository;
-import ru.practicum.comment.dto.CommentDto;
 import ru.practicum.comment.entity.Comment;
 import ru.practicum.compilation.CompilationRepository;
 import ru.practicum.compilation.entity.Compilation;
@@ -15,10 +13,6 @@ import ru.practicum.event.entity.Event;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.UserRepository;
 import ru.practicum.user.entity.User;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +28,6 @@ public class HelperService {
     private final CategoryRepository categoryRepository;
     private final CompilationRepository compilationRepository;
     private final CommentRepository commentRepository;
-    private final CommentMapper commentMapper;
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
@@ -60,12 +53,4 @@ public class HelperService {
         return commentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Comment with id= %d was not found.", id)));
     }
-
-    public List<CommentDto> getCommentsByEvent(Event event) {
-        return commentRepository.findByEvent(event).stream()
-                .sorted(Comparator.comparing(Comment::getCreatedOn))
-                .map(commentMapper::toCommentDto)
-                .collect(Collectors.toList());
-    }
-
 }

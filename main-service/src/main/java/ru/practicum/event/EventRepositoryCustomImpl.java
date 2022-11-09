@@ -25,7 +25,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     @Override
     public List<Event> findByParamsCommon(String text, List<Category> categories, Boolean paid,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, boolean onlyAvailable,
-                                          int from, int size) {
+                                          int from, int size, boolean needSort) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Event> q = cb.createQuery(Event.class);
         Root<Event> eventRoot = q.from(Event.class);
@@ -47,7 +47,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
             predicates.add(cb.or(cb.equal(eventRoot.get("participant_limit"), 0),
                     cb.greaterThan(eventRoot.get("participant_limit"), eventRoot.get("confirmed_requests"))));
         q.select(eventRoot).where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
-        q.orderBy(cb.asc(eventRoot.get("eventDate")));
+        if (needSort) q.orderBy(cb.asc(eventRoot.get("eventDate")));
         return entityManager.createQuery(q).setFirstResult(from).setMaxResults(size).getResultList();
     }
 

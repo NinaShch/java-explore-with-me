@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.DateTimeUtils;
+import ru.practicum.FindCommentsUtil;
 import ru.practicum.HelperService;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.client.StatHitClient;
@@ -56,6 +57,7 @@ public class UserService {
     private final CommentMapper commentMapper;
     private final StatHitClient statHitClient;
     private final HelperService helperService;
+    private final FindCommentsUtil findCommentsUtil;
 
     public List<EventShortDto> getEventsByUser(Long userId, int from, int size) {
         User user = helperService.getUserById(userId);
@@ -89,7 +91,7 @@ public class UserService {
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent,
                 statHitClient.statsRequest(event.getId()).orElse(0L),
-                helperService.getCommentsByEvent(savedEvent)
+                findCommentsUtil.getCommentsByEvent(savedEvent)
                 );
 
     }
@@ -106,7 +108,7 @@ public class UserService {
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent,
                 statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
-                helperService.getCommentsByEvent(savedEvent));
+                findCommentsUtil.getCommentsByEvent(savedEvent));
     }
 
     public EventFullDto getEventByUserAndId(Long userId, Long eventId) {
@@ -118,7 +120,7 @@ public class UserService {
 
         return eventMapper.toEventFullDto(event,
                 statHitClient.statsRequest(event.getId()).orElse(0L),
-                helperService.getCommentsByEvent(event));
+                findCommentsUtil.getCommentsByEvent(event));
     }
 
     public EventFullDto cancelEvent(Long userId, Long eventId) {
@@ -136,7 +138,7 @@ public class UserService {
 
         return eventMapper.toEventFullDto(cancelledEvent,
                 statHitClient.statsRequest(cancelledEvent.getId()).orElse(0L),
-                helperService.getCommentsByEvent(cancelledEvent));
+                findCommentsUtil.getCommentsByEvent(cancelledEvent));
     }
 
     public List<ParticipationRequestDto> getEventRequestsByUserAndId(Long userId, Long eventId) {
@@ -299,7 +301,8 @@ public class UserService {
     }
 
     public CommentDto updateCommentByUser(Long userId, CommentDto commentDto) {
-        if (!Objects.equals(commentDto.getAuthorId(), userId))
+        Comment comment = helperService.getCommentById(commentDto.getId());
+        if (!Objects.equals(comment.getAuthor().getId(), userId))
             throw new BadRequestException("Only author can update comments", "attempt to update comment not by author");
         return commentMapper.toCommentDto(commentRepository.save(commentMapper.toComment(commentDto)));
     }

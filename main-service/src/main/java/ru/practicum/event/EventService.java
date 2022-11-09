@@ -3,6 +3,7 @@ package ru.practicum.event;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.DateTimeUtils;
+import ru.practicum.FindCommentsUtil;
 import ru.practicum.HelperService;
 import ru.practicum.category.entity.Category;
 import ru.practicum.client.HitDto;
@@ -30,6 +31,7 @@ public class EventService {
     private final StatHitClient statHitClient;
     private final EventMapper eventMapper;
     private final HelperService helperService;
+    private final FindCommentsUtil findCommentsUtil;
 
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         statHitClient.hitRequest(
@@ -41,7 +43,7 @@ public class EventService {
 
         Event event = helperService.getEventById(eventId);
         Long hits = statHitClient.statsRequest(eventId).orElse(0L);
-        return eventMapper.toEventFullDto(event, hits, helperService.getCommentsByEvent(event));
+        return eventMapper.toEventFullDto(event, hits, findCommentsUtil.getCommentsByEvent(event));
     }
 
     public List<EventFullDto> getEventByParamsForAdmin(long[] userIds, String[] stateStrings, long[] categoryIds,
@@ -71,7 +73,7 @@ public class EventService {
                 .map((event) -> eventMapper
                         .toEventFullDto(event,
                                 statHitClient.statsRequest(event.getId()).orElse(0L),
-                                helperService.getCommentsByEvent(event)))
+                                findCommentsUtil.getCommentsByEvent(event)))
                 .collect(Collectors.toList());
     }
 
@@ -91,7 +93,26 @@ public class EventService {
         else if ("VIEWS".equals(sort))
             return getEventsByParamsSortedByViews(text, categories, paid, rangeStart, rangeEnd,
                     onlyAvailable, from, size);
-        else throw new BadRequestException("Wrong sort", "nonexistent type of sorting");
+        else return getEventsWithoutSorting(text, categories, paid, rangeStart, rangeEnd,
+                    onlyAvailable, from, size);
+    }
+
+    private List<EventShortDto> getEventsWithoutSorting(String text, List<Category> categories, Boolean paid,
+                                                        String rangeStart, String rangeEnd,
+                                                        boolean onlyAvailable, int from, int size) {
+        List<Event> gotEvents = eventRepository.findByParamsCommon(
+                text,
+                categories,
+                paid,
+                DateTimeUtils.parseDate(rangeStart),
+                DateTimeUtils.parseDate(rangeEnd),
+                onlyAvailable,
+                from,
+                size,
+                false
+        );
+
+        return gotEvents.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
     }
 
     private List<EventShortDto> getEventsByParamsSortedByDate(String text, List<Category> categories, Boolean paid,
@@ -105,7 +126,8 @@ public class EventService {
                 DateTimeUtils.parseDate(rangeEnd),
                 onlyAvailable,
                 from,
-                size
+                size,
+                true
         );
 
         return gotEvents.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
@@ -122,7 +144,8 @@ public class EventService {
                 DateTimeUtils.parseDate(rangeEnd),
                 onlyAvailable,
                 from,
-                size
+                size,
+                false
         );
 
         Map<Long, Long> viewsMap = statHitClient.viewsMapRequest(
@@ -175,7 +198,7 @@ public class EventService {
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent,
                 statHitClient.statsRequest(event.getId()).orElse(0L),
-                helperService.getCommentsByEvent(savedEvent));
+                findCommentsUtil.getCommentsByEvent(savedEvent));
     }
 
     public EventFullDto publishEvent(Long eventId) {
@@ -195,7 +218,7 @@ public class EventService {
 
         return eventMapper.toEventFullDto(savedEvent,
                 statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
-                helperService.getCommentsByEvent(event));
+                findCommentsUtil.getCommentsByEvent(event));
     }
 
     public EventFullDto rejectEvent(Long eventId) {
@@ -209,6 +232,6 @@ public class EventService {
 
         return eventMapper.toEventFullDto(savedEvent,
                 statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
-                helperService.getCommentsByEvent(event));
+                findCommentsUtil.getCommentsByEvent(event));
     }
 }

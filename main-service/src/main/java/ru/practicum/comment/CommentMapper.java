@@ -3,6 +3,7 @@ package ru.practicum.comment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import ru.practicum.DateTimeUtils;
+import ru.practicum.HelperService;
 import ru.practicum.comment.dto.CommentDto;
 import ru.practicum.comment.dto.NewCommentDto;
 import ru.practicum.comment.entity.Comment;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 
 @Mapper(
             componentModel = "spring",
-            uses = {UserMapper.class, EventMapper.class, EventService.class, UserService.class})
+            uses = {UserMapper.class, EventMapper.class, EventService.class, UserService.class, HelperService.class})
     public interface CommentMapper {
 
     @Mapping(target = "author", source = "author")
@@ -26,6 +27,9 @@ import java.time.LocalDateTime;
     @Mapping(target = "id", expression = "java(null)")
     Comment toCommentFromNewCommentDto(NewCommentDto newCommentDto, User author, Event event, LocalDateTime createdOn);
 
+    @Mapping(target = "createdOn", source = "createdOn", dateFormat = DateTimeUtils.DATE_TIME_FORMAT)
+    @Mapping(target = "author", source = "authorId")
+    @Mapping(target = "event", source = "eventId")
     Comment toComment(CommentDto commentDto);
 
     @Mapping(target = "authorId", source = "author.id")
