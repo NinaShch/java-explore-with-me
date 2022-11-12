@@ -6,9 +6,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.DateTimeUtils;
+import ru.practicum.FindCommentsUtil;
 import ru.practicum.HelperService;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.client.StatHitClient;
+import ru.practicum.comment.CommentMapper;
+import ru.practicum.comment.CommentRepository;
+import ru.practicum.comment.dto.CommentDto;
+import ru.practicum.comment.dto.NewCommentDto;
+import ru.practicum.comment.entity.Comment;
 import ru.practicum.event.EventMapper;
 import ru.practicum.event.EventRepository;
 import ru.practicum.event.dto.EventFullDto;
@@ -18,6 +24,7 @@ import ru.practicum.event.dto.UpdateEventDto;
 import ru.practicum.event.entity.Event;
 import ru.practicum.event.entity.State;
 import ru.practicum.event.entity.Status;
+import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.paging.OffsetLimitPageable;
@@ -32,6 +39,7 @@ import ru.practicum.user.entity.User;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,12 +49,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
+    private final CommentRepository commentRepository;
     private final ParticipationRequestRepository participationRequestRepository;
     private final ParticipationRequestMapper participationRequestMapper;
     private final UserMapper userMapper;
     private final EventMapper eventMapper;
+    private final CommentMapper commentMapper;
     private final StatHitClient statHitClient;
     private final HelperService helperService;
+    private final FindCommentsUtil findCommentsUtil;
 
     public List<EventShortDto> getEventsByUser(Long userId, int from, int size) {
         User user = helperService.getUserById(userId);
@@ -78,7 +89,10 @@ public class UserService {
         event.setTitle(updateEventDto.getTitle());
         if (event.getState().equals(State.CANCELED)) event.setState(State.PENDING);
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(event.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(savedEvent,
+                statHitClient.statsRequest(event.getId()).orElse(0L),
+                findCommentsUtil.getCommentsByEvent(savedEvent)
+                );
 
     }
 
@@ -92,7 +106,9 @@ public class UserService {
 
         Event event = eventMapper.toEvent(newEventDto, user, LocalDateTime.now());
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toEventFullDto(savedEvent, statHitClient.statsRequest(savedEvent.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(savedEvent,
+                statHitClient.statsRequest(savedEvent.getId()).orElse(0L),
+                findCommentsUtil.getCommentsByEvent(savedEvent));
     }
 
     public EventFullDto getEventByUserAndId(Long userId, Long eventId) {
@@ -102,7 +118,9 @@ public class UserService {
             throw new ForbiddenException("Only the initiator can get event details");
         }
 
-        return eventMapper.toEventFullDto(event, statHitClient.statsRequest(event.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(event,
+                statHitClient.statsRequest(event.getId()).orElse(0L),
+                findCommentsUtil.getCommentsByEvent(event));
     }
 
     public EventFullDto cancelEvent(Long userId, Long eventId) {
@@ -118,7 +136,9 @@ public class UserService {
         event.setState(State.CANCELED);
         Event cancelledEvent = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(cancelledEvent, statHitClient.statsRequest(cancelledEvent.getId()).orElse(0L));
+        return eventMapper.toEventFullDto(cancelledEvent,
+                statHitClient.statsRequest(cancelledEvent.getId()).orElse(0L),
+                findCommentsUtil.getCommentsByEvent(cancelledEvent));
     }
 
     public List<ParticipationRequestDto> getEventRequestsByUserAndId(Long userId, Long eventId) {
@@ -264,5 +284,26 @@ public class UserService {
 
         ParticipationRequest cancelledOne = participationRequestRepository.save(request);
         return participationRequestMapper.toParticipationRequestDto(cancelledOne);
+    }
+
+    public CommentDto createComment(Long userId, Long eventId, NewCommentDto newCommentDto) {
+        User user = helperService.getUserById(userId);
+        Event event = helperService.getEventById(eventId);
+        Comment comment = commentMapper.toCommentFromNewCommentDto(newCommentDto, user, event, LocalDateTime.now());
+        return commentMapper.toCommentDto(commentRepository.save(comment));
+    }
+
+    public void deleteComment(Long userId, Long commentId) {
+        Comment comment = helperService.getCommentById(commentId);
+        if (!Objects.equals(comment.getAuthor().getId(), userId))
+            throw new BadRequestException("Only author can delete comments", "attempt to delete comment not by author");
+        commentRepository.delete(comment);
+    }
+
+    public CommentDto updateCommentByUser(Long userId, CommentDto commentDto) {
+        Comment comment = helperService.getCommentById(commentDto.getId());
+        if (!Objects.equals(comment.getAuthor().getId(), userId))
+            throw new BadRequestException("Only author can update comments", "attempt to update comment not by author");
+        return commentMapper.toCommentDto(commentRepository.save(commentMapper.toComment(commentDto)));
     }
 }

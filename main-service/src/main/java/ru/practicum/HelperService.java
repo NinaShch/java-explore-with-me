@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.category.entity.Category;
+import ru.practicum.comment.CommentRepository;
+import ru.practicum.comment.entity.Comment;
 import ru.practicum.compilation.CompilationRepository;
 import ru.practicum.compilation.entity.Compilation;
 import ru.practicum.event.EventRepository;
@@ -25,6 +27,7 @@ public class HelperService {
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
     private final CompilationRepository compilationRepository;
+    private final CommentRepository commentRepository;
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
@@ -46,4 +49,8 @@ public class HelperService {
                 .orElseThrow(() -> new NotFoundException(String.format("Compilation with id= %d was not found.", id)));
     }
 
+    public Comment getCommentById(Long id) {
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Comment with id= %d was not found.", id)));
+    }
 }
